@@ -6,4 +6,5 @@
 *.opensdf
 x64
 ipch
+build
 *.user
