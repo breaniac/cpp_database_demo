@@ -4,7 +4,12 @@ project(CPPCraftDemo)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(CPPCraftDemo CPPCraftDemo/CPPCraftDemo.cpp)
+add_executable(CPPCraftDemo
+    CPPCraftDemo/CPPCraftDemo.cpp
+    CPPCraftDemo/QBDatabase.cpp
+)
+
+target_link_options(CPPCraftDemo PRIVATE -static-libgcc -static-libstdc++)
 
 # Make the CPPCraftDemo subfolder available as an include path so that
 # stdafx.h (and targetver.h) are found when the source file does #include "stdafx.h"
