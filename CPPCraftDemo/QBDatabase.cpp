@@ -1,17 +1,25 @@
 #include "stdafx.h"
 #include "QBDatabase.h"
 #include <algorithm>
+#include <cassert>
+#include <iostream>
 
 size_t QBDatabase::size() const
 {
     return db_records.size();
 }
 
-void QBDatabase::insert(QBRecord rec)
+int QBDatabase::insert(QBRecord rec)
 {
     unsigned int id = rec.column0;
+    if(db_records.find(id) != db_records.end()) {
+        std::cerr << "There is already inserted id: " << id << std::endl;
+        return -1;
+    }
+    
     db_idx_col2[rec.column2].push_back(id);
     db_records.emplace(id, std::move(rec));
+    return 0;
 }
 
 QBRecordCollection QBDatabase::findMatching(const std::string& columnName,
@@ -19,35 +27,41 @@ QBRecordCollection QBDatabase::findMatching(const std::string& columnName,
 {
     QBRecordCollection result;
 
-    if (columnName == "column0") {
-        unsigned int key = std::stoul(matchString);
-        auto it = db_records.find(key);
-        if (it != db_records.end())
-            result.push_back(it->second);
+    try {
+        if (columnName == "column0") {
+            unsigned int key = std::stoul(matchString);
+            auto it = db_records.find(key);
+            if (it != db_records.end())
+                result.push_back(it->second);
 
-    } else if (columnName == "column2") {
-        long key = std::stol(matchString);
-        auto it = db_idx_col2.find(key);
-        
-        if (it != db_idx_col2.end()) {
-            for (unsigned int id : it->second) {
-                auto rec_it = db_records.find(id);
-                if (rec_it != db_records.end())
-                    result.push_back(rec_it->second);
+        } else if (columnName == "column2") {
+            long key = std::stol(matchString);
+            auto it = db_idx_col2.find(key);
+            
+            if (it != db_idx_col2.end()) {
+                for (unsigned int id : it->second) {
+                    auto rec_it = db_records.find(id);
+                    if (rec_it != db_records.end())
+                        result.push_back(rec_it->second);
+                }
+            }
+
+        } else if (columnName == "column1") {
+            for (const auto& entry : db_records) {
+                if (entry.second.column1.find(matchString) != std::string::npos)
+                    result.push_back(entry.second);
+            }
+
+        } else if (columnName == "column3") {
+            for (const auto& entry : db_records) {
+                if (entry.second.column3.find(matchString) != std::string::npos)
+                    result.push_back(entry.second);
             }
         }
-
-    } else if (columnName == "column1") {
-        for (const auto& entry : db_records) {
-            if (entry.second.column1.find(matchString) != std::string::npos)
-                result.push_back(entry.second);
-        }
-
-    } else if (columnName == "column3") {
-        for (const auto& entry : db_records) {
-            if (entry.second.column3.find(matchString) != std::string::npos)
-                result.push_back(entry.second);
-        }
+    // A guard — catching exeptions from std::stoul/stol
+    } catch (const std::exception& e) {
+        std::cerr << "Error in findMatching: " << e.what() << std::endl;
+        return {};
     }
 
     return result;

@@ -11,7 +11,8 @@ class QBDatabase
 public:
     /// @brief Insert a record into the database.
     /// @param rec The record to be inserted.
-    void insert(QBRecord rec);
+    /// @return 0 if the record was successfully inserted, -1 if a record with the same ID already exists.
+    int insert(QBRecord rec);
 
     /// @brief Find all records where a specific column matches a given string.
     /// @param columnName The name of the column to search.

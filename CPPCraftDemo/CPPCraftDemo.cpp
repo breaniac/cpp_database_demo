@@ -66,7 +66,10 @@ static QBDatabase buildDatabase(const QBRecordCollection &data)
 {
     QBDatabase db;
     for (const QBRecord &rec : data) {
-        db.insert(rec);
+        int err = db.insert(rec);
+        if (err != 0) {
+            std::cerr << "Error inserting record with ID " << rec.column0 << std::endl;
+        }
     }
     return db;
 }
