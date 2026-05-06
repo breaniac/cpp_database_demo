@@ -3,14 +3,29 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <mutex>
+
+// Move constructor implementation
+QBDatabase::QBDatabase(QBDatabase &&other) noexcept
+{
+    std::unique_lock<std::shared_mutex> lock_other(other.m_mutex);
+
+    db_records = std::move(other.db_records);
+    db_idx_col2 = std::move(other.db_idx_col2);
+
+    other.db_records.clear();
+    other.db_idx_col2.clear();
+}
 
 size_t QBDatabase::size() const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     return db_records.size();
 }
 
 int QBDatabase::insert(QBRecord rec)
 {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
     unsigned int id = rec.column0;
     if(db_records.find(id) != db_records.end()) {
         std::cerr << "There is already inserted id: " << id << std::endl;
@@ -25,6 +40,7 @@ int QBDatabase::insert(QBRecord rec)
 QBRecordCollection QBDatabase::findMatching(const std::string& columnName,
                                              const std::string& matchString) const
 {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     QBRecordCollection result;
 
     try {
@@ -69,6 +85,7 @@ QBRecordCollection QBDatabase::findMatching(const std::string& columnName,
 
 bool QBDatabase::deleteById(unsigned int id)
 {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
     auto rec_it = db_records.find(id);
     if (rec_it == db_records.end())
         return false;

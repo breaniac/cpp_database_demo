@@ -5,10 +5,20 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <shared_mutex>
 
 class QBDatabase
 {
 public:
+    // Constructors
+    QBDatabase() = default;
+    QBDatabase(const QBDatabase&) = delete;            // non-copyable
+    QBDatabase& operator=(const QBDatabase&) = delete; // non-assignable    
+
+    // Move constructor and assignment operator
+    QBDatabase(QBDatabase &&) noexcept;
+    QBDatabase &operator=(QBDatabase &&) noexcept;
+
     /// @brief Insert a record into the database.
     /// @param rec The record to be inserted.
     /// @return 0 if the record was successfully inserted, -1 if a record with the same ID already exists.
@@ -31,6 +41,7 @@ public:
     size_t size() const;
 
 private:
+    mutable std::shared_mutex                            m_mutex;     // readers-writer lock: shared for reads, unique for writes
     std::unordered_map<unsigned int, QBRecord>           db_records;  // id -> record (primary store + col0 index)
     std::unordered_map<long, std::vector<unsigned int>>  db_idx_col2; // col2 -> [record ids]
 };
